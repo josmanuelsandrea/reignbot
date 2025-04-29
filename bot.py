@@ -13,8 +13,8 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # Carga la extensión donde está tu Cog
         inicializar_db()  # Inicializa la base de datos
-        await self.load_extension("commands.actions.diplomatic_actions")
-        await self.load_extension("commands.manage_game")
+        await self.load_extension("cogs.actions.diplomatic_actions")
+        await self.load_extension("cogs.manage_game")
         # Sincroniza los slash commands (globales)
         await self.tree.sync()
 
