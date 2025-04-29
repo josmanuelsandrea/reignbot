@@ -9,20 +9,19 @@ from utils.cooldown_manager import (tiene_cooldown, registrar_uso, tiempo_restan
 # Hardcodeado; luego podrás extraerlo de la BD
 REINOS_DISPONIBLES = ["Eltaris", "Lunaris", "Valken", "Zendar"]
 
-class AccionesDiplomatico(commands.GroupCog, group_name="diplomatico", group_description="Acciones para diplomáticos"):
+class AccionesCanciller(commands.GroupCog, group_name="diplomatico", group_description="Acciones para diplomáticos"):
     COOLDOWN_ESPIAR = 6 * 60 * 60  # 6 horas
 
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
-        print("⚙️  Cog AccionesDiplomatico cargado.")
 
     @app_commands.command(name="espiar_reino", description="Espía a un reino enemigo para obtener información")
     @app_commands.describe(nombre_reino_objetivo="El reino al que quieres espiar")
     async def espiar_reino(self,interaction: discord.Interaction,nombre_reino_objetivo: str):
         # Validar rol de diplomático
         jugador = obtener_jugador(interaction.user.id)
-        if not jugador or jugador[4] != "Diplomático":
+        if not jugador or jugador[4] != "Canciller":
             return await interaction.response.send_message("❌ No tienes permiso para usar esto.", ephemeral=True)
 
         # Cooldown
@@ -58,4 +57,4 @@ class AccionesDiplomatico(commands.GroupCog, group_name="diplomatico", group_des
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(AccionesDiplomatico(bot))
+    await bot.add_cog(AccionesCanciller(bot))
