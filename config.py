@@ -10,4 +10,4 @@ COMMAND_PREFIX = os.getenv('COMMAND_PREFIX', '!')  # Por defecto "!" si no está
 
 TERRITORIO_TOTAL = 100000  # Total km² para repartir entre reinos
 NOMBRES_REINOS = ["Eltaris", "Lunaris", "Valken", "Zendar"]
-ROLES = ["Comandante", "Canciller", "Tesorero", "Mayoral", "Maestro de Obras"]
+ROLES = ["Comandante", "Canciller", "Tesorero", "Mayoral"]

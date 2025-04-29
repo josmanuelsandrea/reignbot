@@ -11,8 +11,9 @@ from database.db_manager import (
     agregar_reino,
     agregar_jugador,
     obtener_reinos,
-    obtener_jugadores_por_reino,
-    obtener_jugador
+    obtener_jugador,
+    obtener_jugadores_en_espera,
+    actualizar_jugador_completo
 )
 from config import TERRITORIO_TOTAL, ROLES
 
@@ -20,10 +21,6 @@ from config import TERRITORIO_TOTAL, ROLES
 class ManageGame(commands.GroupCog,
                  group_name="partida",
                  group_description="Acciones relacionadas a la partida."):
-    """
-    Comandos para gestionar partidas por servidor, permitiendo definir nombres de reinos.
-    """
-
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
@@ -36,9 +33,6 @@ class ManageGame(commands.GroupCog,
         nombres="Lista de nombres de reinos separados por comas, p.ej. 'Eltaris, Lunaris, Valken'"
     )
     async def crear(self, interaction: discord.Interaction, nombres: str):
-        """
-        Crea una partida única para la guild usando los nombres proporcionados.
-        """
         guild_id = interaction.guild.id
         inicializar_db()
         if obtener_partida(guild_id):
@@ -70,51 +64,87 @@ class ManageGame(commands.GroupCog,
 
     @app_commands.command(
         name="unirme",
-        description="Unirte a un reino aleatorio y recibir un rol, único por reino."
+        description="Registrarte en la lista de espera para la partida."
     )
     async def unirme(self, interaction: discord.Interaction):
-        """
-        Asigna al usuario a un reino y rol aleatorios existentes en la partida,
-        asegurando que no se repita un rol dentro del mismo reino y que no se una dos veces.
-        """
-        # Verificar que el usuario no esté ya registrado
         existente = obtener_jugador(interaction.user.id)
         if existente:
             return await interaction.response.send_message(
-                f"❌ Ya estás unido al reino **{existente['reino']}** como **{existente['rol']}**.",
-                ephemeral=True
+                "❌ Ya estás registrado en la partida.", ephemeral=True
             )
-
-        reinos = [r['nombre'] for r in obtener_reinos()]
-        if not reinos:
-            return await interaction.response.send_message(
-                "❌ No hay reinos disponibles. Usa `/partida crear` primero.",
-                ephemeral=True
-            )
-        reinos_disponibles = []
-        for reino in reinos:
-            jugadores = obtener_jugadores_por_reino(reino)
-            used_roles = [j['rol'] for j in jugadores]
-            available_roles = [role for role in ROLES if role not in used_roles]
-            if available_roles:
-                reinos_disponibles.append((reino, available_roles))
-        if not reinos_disponibles:
-            return await interaction.response.send_message(
-                "❌ Todos los roles están ocupados en cada reino. No hay espacio disponible.",
-                ephemeral=True
-            )
-        reino_asignado, roles_libres = random.choice(reinos_disponibles)
-        rol_asignado = random.choice(roles_libres)
         agregar_jugador(
             interaction.user.id,
             str(interaction.user),
-            reino_asignado,
-            rol_asignado
+            reino=None,
+            rol=None
         )
         await interaction.response.send_message(
-            f"🛡️ {interaction.user.mention} se ha unido al reino {reino_asignado} como {rol_asignado}.",
+            f"📝 {interaction.user.mention}, has sido añadido a la lista de espera.",
             ephemeral=False
         )
+
+    @app_commands.command(
+        name="comenzar_partida",
+        description="Distribuir jugadores a reinos y asignar roles."
+    )
+    async def comenzar_partida(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+        jugadores_en_espera = obtener_jugadores_en_espera()
+        reinos = [r['nombre'] for r in obtener_reinos()]
+
+        if not jugadores_en_espera:
+            return await interaction.followup.send(
+                "❌ No hay jugadores en la lista de espera.", ephemeral=True
+            )
+        if not reinos:
+            return await interaction.followup.send(
+                "❌ No hay reinos disponibles. Usa `/partida crear` primero.", ephemeral=True
+            )
+
+        distribucion = {reino: [] for reino in reinos}
+        for idx, jugador in enumerate(jugadores_en_espera):
+            reino_asignado = reinos[idx % len(reinos)]
+            distribucion[reino_asignado].append(jugador)
+
+        cambios = []
+
+        for reino, jugadores in distribucion.items():
+            if not jugadores:
+                continue
+
+            roles_disponibles = ROLES.copy()
+            asignaciones = {jugador['usuario_id']: [] for jugador in jugadores}
+
+            max_intentos = 1000
+            intentos = 0
+
+            while roles_disponibles and intentos < max_intentos:
+                for jugador in jugadores:
+                    if not roles_disponibles:
+                        break
+                    rol = roles_disponibles.pop(random.randint(0, len(roles_disponibles) - 1))
+                    asignaciones[jugador['usuario_id']].append(rol)
+                intentos += 1
+
+            for jugador in jugadores:
+                roles_texto = ", ".join(asignaciones[jugador['usuario_id']])
+                actualizar_jugador_completo(
+                    jugador['usuario_id'],
+                    reino,
+                    roles_texto
+                )
+                cambios.append(f"🏰 {jugador['nombre_usuario']} fue asignado al reino **{reino}** como **{roles_texto}**.")
+
+        if cambios:
+            await interaction.followup.send(
+                "✅ Partida iniciada con las siguientes asignaciones:\n" + "\n".join(cambios),
+                ephemeral=False
+            )
+        else:
+            await interaction.followup.send(
+                "✅ Todos los roles ya estaban asignados. ¡La partida puede comenzar!",
+                ephemeral=False
+            )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ManageGame(bot))

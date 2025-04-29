@@ -136,3 +136,29 @@ def obtener_partida(guild_id):
                 'SELECT * FROM partidas WHERE guild_id = ?', (guild_id,)
             )
             return cur.fetchone()
+
+def actualizar_jugador_roles(usuario_id, nuevo_roles):
+    """Actualiza el campo roles de un jugador."""
+    with closing(sqlite3.connect(DB_NAME)) as conn:
+        with conn:
+            conn.execute(
+                'UPDATE jugadores SET rol = ? WHERE usuario_id = ?',
+                (nuevo_roles, usuario_id)
+            )
+            
+def obtener_jugadores_en_espera():
+    """Obtiene jugadores que aún no tienen reino asignado."""
+    with closing(sqlite3.connect(DB_NAME)) as conn:
+        conn.row_factory = sqlite3.Row
+        with conn:
+            cur = conn.execute('SELECT * FROM jugadores WHERE reino IS NULL')
+            return [dict(row) for row in cur.fetchall()]
+
+def actualizar_jugador_completo(usuario_id, reino, rol):
+    """Asigna reino y rol al jugador."""
+    with closing(sqlite3.connect(DB_NAME)) as conn:
+        with conn:
+            conn.execute(
+                'UPDATE jugadores SET reino = ?, rol = ? WHERE usuario_id = ?',
+                (reino, rol, usuario_id)
+            )
