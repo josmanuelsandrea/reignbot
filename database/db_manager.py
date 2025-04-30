@@ -1,44 +1,17 @@
 import sqlite3
 import datetime
+import os
 from contextlib import closing
 
 DB_NAME = 'bot_reinos.db'
+SQL_FILE_PATH = os.path.join(os.path.dirname(__file__), 'sql', 'init_db.sql')
 
 def inicializar_db():
     with closing(sqlite3.connect(DB_NAME)) as conn:
         with conn:
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS jugadores (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    usuario_id INTEGER UNIQUE,
-                    nombre_usuario TEXT,
-                    reino TEXT,
-                    rol TEXT,
-                    es_rey BOOLEAN
-                )
-            ''')
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS reinos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nombre TEXT UNIQUE,
-                    territorio INTEGER,
-                    soldados INTEGER,
-                    oro INTEGER,
-                    moral INTEGER,
-                    alimentacion INTEGER,
-                    defensa_base INTEGER
-                )
-            ''')
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS partidas (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    guild_id INTEGER UNIQUE,
-                    nombre_partida TEXT,
-                    fecha_inicio TEXT,
-                    fecha_fin TEXT,
-                    ganador TEXT
-                )
-            ''')
+            with open(SQL_FILE_PATH, 'r', encoding='utf-8') as f:
+                script = f.read()
+                conn.executescript(script)
 
 # Jugadores
 def agregar_jugador(usuario_id, nombre_usuario, reino, rol, es_rey=False):
