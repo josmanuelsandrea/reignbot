@@ -1,5 +1,4 @@
 # cogs/crear_partida.py
-import random
 from datetime import datetime
 import discord
 from discord import app_commands
@@ -9,8 +8,9 @@ from database.db_manager import (
     inicializar_db,
     crear_partida,
     obtener_partida,
-    agregar_reino
+    agregar_reino,
 )
+
 from config import TERRITORIO_TOTAL
 
 class CrearPartidaCog(commands.Cog):
@@ -22,7 +22,7 @@ class CrearPartidaCog(commands.Cog):
         description="Crear una nueva partida en este servidor especificando los nombres de los reinos."
     )
     @app_commands.describe(
-        nombres="Lista de nombres de reinos separados por comas, p.ej. 'Eltaris, Lunaris, Valken'"
+        nombres="Lista de nombres de reinos separados por comas, p.ej. 'Eltaris, Lunaris, Valken'. NOTA: los nombres seran mostrados siempre como 'Reino de <nombre>'."
     )
     async def crear(self, interaction: discord.Interaction, nombres: str):
         inicializar_db()

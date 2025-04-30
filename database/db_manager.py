@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 from contextlib import closing
 
 DB_NAME = 'bot_reinos.db'
@@ -161,4 +162,38 @@ def actualizar_jugador_completo(usuario_id, reino, rol):
             conn.execute(
                 'UPDATE jugadores SET reino = ?, rol = ? WHERE usuario_id = ?',
                 (reino, rol, usuario_id)
+            )
+
+# Marca la partida como finalizada poniendo la fecha de fin
+def finalizar_partida(guild_id):
+    """
+    Actualiza la partida para el servidor dado, estableciendo fecha_fin al momento actual.
+    """
+    with closing(sqlite3.connect(DB_NAME)) as conn:
+        with conn:
+            conn.execute(
+                '''
+                UPDATE partidas
+                SET fecha_fin = ?
+                WHERE guild_id = ?
+                ''',
+                (datetime.datetime.utcnow().isoformat(), guild_id)
+            )
+
+# Borra todo el estado de jugadores, reinos y la partida para reiniciar desde cero
+def reset_partida(guild_id):
+    """
+    Elimina todos los jugadores, todos los reinos y la partida asociada al servidor.
+    Ojo: jugadores y reinos no tienen guild_id, así que se eliminan completamente.
+    """
+    with closing(sqlite3.connect(DB_NAME)) as conn:
+        with conn:
+            # Borra todos los jugadores
+            conn.execute('DELETE FROM jugadores')
+            # Borra todos los reinos
+            conn.execute('DELETE FROM reinos')
+            # Borra sólo la partida de este guild
+            conn.execute(
+                'DELETE FROM partidas WHERE guild_id = ?',
+                (guild_id,)
             )
