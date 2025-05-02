@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from config import TOKEN
-from database.db_manager import inicializar_db
+from database.models import initialize_db
 from utils.cogs_loader import load_cogs
 
 class MyBot(commands.Bot):
@@ -13,7 +13,7 @@ class MyBot(commands.Bot):
 
     async def setup_hook(self):
         # Carga la extensión donde está tu Cog
-        inicializar_db()  # Inicializa la base de datos
+        initialize_db()  # Asegúrate de que la base de datos esté inicializada
         await load_cogs(self, directory="cogs")
 
         # await self.load_extension("cogs.actions.diplomatic_actions")

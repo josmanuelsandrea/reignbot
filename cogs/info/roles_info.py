@@ -1,9 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-
 from config import ROLES
-from database.db_manager import obtener_reino  # opcional, si quieres más datos
 
 ROLE_DESCRIPTIONS = {
     "Comandante": "Lider militar: dirige tropas, organiza batallas y toma decisiones estratégicas.",
