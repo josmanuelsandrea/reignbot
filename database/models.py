@@ -2,7 +2,8 @@
 from peewee import (
     Model, SqliteDatabase,
     AutoField, IntegerField, CharField,
-    ForeignKeyField, DateTimeField
+    ForeignKeyField, DateTimeField,
+    BooleanField, TextField
 )
 
 from datetime import datetime
@@ -61,10 +62,26 @@ class Accion(BaseModel):
     jugador = ForeignKeyField(Jugador, backref='acciones', on_delete='CASCADE')
     descripcion = CharField(null=False)
     fecha = DateTimeField(default=datetime.now)
+    
+class CouncilSession(BaseModel):
+    id          = AutoField()
+    reino       = ForeignKeyField(Reino, backref='sessions', on_delete='CASCADE')
+    razon       = CharField()           # por ejemplo "renombrar"
+    require_all = BooleanField(default=True)
+    started_at  = DateTimeField(default=datetime.now)
+    new_value   = TextField(null=True)      # ← para el valor del cambio (p.ej. nuevo nombre)
+    closed      = BooleanField(default=False)
+
+class CouncilVote(BaseModel):
+    id         = AutoField()
+    session    = ForeignKeyField(CouncilSession, backref='votes', on_delete='CASCADE')
+    jugador    = ForeignKeyField(Jugador, backref='votes', on_delete='CASCADE')
+    decision   = BooleanField()         # True=“sí”, False=“no”
+    voted_at   = DateTimeField(default=datetime.now)
 
 
 def initialize_db():
     """Crea las tablas en la base de datos (si no existen)."""
     db.connect()
-    db.create_tables([Partida, Reino, Jugador, JugadorRol, Accion])
+    db.create_tables([Partida, Reino, Jugador, JugadorRol, Accion, CouncilSession, CouncilVote])
     db.close()

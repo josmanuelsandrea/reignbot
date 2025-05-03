@@ -36,3 +36,17 @@ REIGN_START_PROPS = {
     "comida": 70, # might be infinite
     "defensa_base": 50, # 1 - 1000
 }
+
+COUNCIL_REASONS = {
+    "renombrar": {
+        "label": "Cambiar nombre del reino",
+        "success_message": (
+            "🏰 **Consejo Real de** **{old_name}** 🏰\n\n"
+            "🔔 **¡Atención!** El consejo se ha reunido y ha decidido:\n"
+            "➡️ **Renombrar el reino a** __**{new_name}**__\n\n"
+            "🎉 ¡Que su nuevo estandarte ondee con orgullo!"
+        ),
+        "require_all": True
+    },
+    # en el futuro: "otra_razon": { ... }
+}
